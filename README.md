@@ -1,63 +1,56 @@
-# TypeScript Next.js example
+# Debate Parlor
 
-This is a really simple project that shows the usage of Next.js with TypeScript.
+A web application for timed debates and discussions. Debate Parlor allows users to engage in time-limited debates on either user-selected topics or randomly assigned topics.
 
-## Deploy your own
+## Features
 
-Deploy the example using [Vercel](https://vercel.com?utm_source=github&utm_medium=readme&utm_campaign=next-example) or preview live with [StackBlitz](https://stackblitz.com/github/vercel/next.js/tree/canary/examples/with-typescript)
+- Enter your name to begin
+- Choose between two debate formats:
+  - **Free Topic** - Join a chatroom to argue about any topic you choose
+  - **Assigned Topic** - Debate a randomly assigned topic with a partner
+- 4-minute timer for each debate session
+- Agreement feature in assigned topic mode - when both debaters agree, a new topic is assigned and the timer resets
+- Real-time chatting with Socket.IO
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/vercel/next.js/tree/canary/examples/with-typescript&project-name=with-typescript&repository-name=with-typescript)
+## Tech Stack
 
-## How to use it?
+- Next.js (React framework)
+- Socket.IO (for real-time communication)
+- TailwindCSS (for styling)
+- TypeScript
 
-Execute [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) with [npm](https://docs.npmjs.com/cli/init), [Yarn](https://yarnpkg.com/lang/en/docs/cli/create/), or [pnpm](https://pnpm.io) to bootstrap the example:
+## Setup Instructions
 
-```bash
-npx create-next-app --example with-typescript with-typescript-app
-```
+1. Install dependencies:
 
-```bash
-yarn create next-app --example with-typescript with-typescript-app
-```
+   ```bash
+   npm install
+   ```
 
-```bash
-pnpm create next-app --example with-typescript with-typescript-app
-```
+2. Run the development server:
 
-Deploy it to the cloud with [Vercel](https://vercel.com/new?utm_source=github&utm_medium=readme&utm_campaign=next-example) ([Documentation](https://nextjs.org/docs/deployment)).
+   ```bash
+   node server.js
+   ```
 
-## Notes
+3. Open your browser and visit:
+   ```
+   http://localhost:3000
+   ```
 
-This example shows how to integrate the TypeScript type system into Next.js. Since TypeScript is supported out of the box with Next.js, all we have to do is to install TypeScript.
+## Development Notes
 
-```shell
-npm install --save-dev typescript
-```
+The application uses:
 
-```shell
-yarn install --save-dev typescript
-```
+- Next.js App Router for routing
+- Socket.IO for real-time communication
+- Context API for state management
+- Session storage for preserving user data between pages
 
-```shell
-pnpm install --save-dev typescript
-```
+## Project Structure
 
-To enable TypeScript's features, we install the type declarations for React and Node.
-
-```shell
-npm install --save-dev @types/react @types/react-dom @types/node
-```
-
-```shell
-yarn install --save-dev @types/react @types/react-dom @types/node
-```
-
-```shell
-pnpm install --save-dev @types/react @types/react-dom @types/node
-```
-
-When we run `next dev` the next time, Next.js will start looking for any `.ts` or `.tsx` files in our project and builds it. It even automatically creates a `tsconfig.json` file for our project with the recommended settings.
-
-Next.js has built-in TypeScript declarations, so we'll get autocompletion for Next.js' modules straight away.
-
-A `type-check` script is also added to `package.json`, which runs TypeScript's `tsc` CLI in `noEmit` mode to run type-checking separately. You can then include this, for example, in your `test` scripts.
+- `app/` - Next.js app router components and pages
+  - `components/` - Reusable UI components
+  - `contexts/` - React context providers
+  - `lib/` - Utility functions and types
+- `server.js` - Socket.IO server implementation

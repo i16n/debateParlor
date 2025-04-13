@@ -1,0 +1,58 @@
+@import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply text-gray-800 font-['Patrick_Hand'];
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 text-white rounded-md transition-colors;
+  }
+  .btn-primary {
+    @apply bg-primary hover:bg-indigo-700;
+  }
+  .btn-secondary {
+    @apply bg-secondary hover:bg-purple-700;
+  }
+  .input {
+    @apply w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary;
+  }
+}
+
+/* Wired Elements Styling */
+wired-input {
+  display: block;
+  width: 100%;
+  font-size: 1rem;
+  padding: 0.25rem;
+  min-height: 42px;
+}
+
+wired-button {
+  display: inline-block;
+  width: 100%;
+  font-size: 1rem;
+  cursor: pointer;
+  --wired-rendered-font: inherit;
+  color: #6366f1;
+}
+
+wired-button[class*="p-2"] {
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  max-width: 200px;
+}
+
+wired-button[type="submit"] {
+  width: 100%;
+  display: block;
+  text-align: center;
+  font-weight: 500;
+}
