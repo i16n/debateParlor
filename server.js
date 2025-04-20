@@ -103,16 +103,6 @@ app.prepare().then(() => {
           room.topic = getRandomTopic();
         }
 
-        // Add a system message indicating waiting status
-        const waitingMessage = {
-          id: uuidv4(),
-          content: "Waiting for someone to join...",
-          sender: "System",
-          timestamp: new Date(),
-          isSystem: true,
-        };
-        room.messages.push(waitingMessage);
-
         rooms.set(roomId, room);
         console.log(`Created new ${roomType} room ${roomId}`);
       }
@@ -151,33 +141,6 @@ app.prepare().then(() => {
 
           // Emit userJoined event to the other user (for state management only)
           socket.to(room.id).emit("userJoined", user);
-
-          // Create and send message to first user about second user joining
-          const userJoinedMessage = {
-            id: uuidv4(),
-            content: `${user.name} has joined the chat.`,
-            sender: "System",
-            timestamp: new Date(),
-            isSystem: true,
-          };
-
-          // Add to room history
-          room.messages.push(userJoinedMessage);
-
-          // Explicitly send to the first user
-          io.to(otherUser.socketId).emit("message", userJoinedMessage);
-
-          // Send message to the second user about the first user
-          const otherUserMessage = {
-            id: uuidv4(),
-            content: `${otherUser.name} has joined the chat.`,
-            sender: "System",
-            timestamp: new Date(),
-            isSystem: true,
-          };
-
-          // Send directly to the second user (don't add to room history)
-          io.to(socket.id).emit("message", otherUserMessage);
         }
       }
 
@@ -215,13 +178,6 @@ app.prepare().then(() => {
 
       // Add to room messages
       room.messages.push(message);
-
-      console.log(`Broadcasting message to room ${room.id}:`, {
-        sender: user.name,
-        roomUsers: room.users.map((u) => u.name),
-        socketRooms: [...socket.rooms], // Debug to see what rooms this socket is in
-        content: content.substring(0, 20) + (content.length > 20 ? "..." : ""), // First 20 chars for privacy
-      });
 
       // Broadcast to room
       io.to(room.id).emit("message", message);

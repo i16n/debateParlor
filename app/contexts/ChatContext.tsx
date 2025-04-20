@@ -101,12 +101,16 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     const onUserJoined = (user: User) => {
+      console.log(`User ${user.name} joined the room`);
+      
+      // Update partner state
       setPartner(user);
+      
+      // No longer waiting for a partner
       setIsWaiting(false);
+      
+      // Start the timer when partner joins
       setIsTimerRunning(true);
-
-      // Note: We don't need to add a system message here anymore
-      // since the server will send it through the 'message' event
     };
 
     const onUserLeft = (userId: string) => {

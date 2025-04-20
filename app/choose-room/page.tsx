@@ -56,12 +56,6 @@ export default function ChooseRoom() {
           </Link>
         </div>
 
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">
-            Choose Your Debate Room
-          </h1>
-        </div>
-
         <div className="mt-8 space-y-4">
           <wired-card
             elevation={2}

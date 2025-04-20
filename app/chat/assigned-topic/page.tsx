@@ -31,6 +31,7 @@ export default function AssignedTopicChat() {
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [forceLoading, setForceLoading] = useState(true);
+  const [isPartnerNew, setIsPartnerNew] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -47,6 +48,18 @@ export default function AssignedTopicChat() {
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Track when partner changes and set animation
+  useEffect(() => {
+    if (partner) {
+      setIsPartnerNew(true);
+      const timer = setTimeout(() => {
+        setIsPartnerNew(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [partner]);
 
   // Load user data from session storage
   useEffect(() => {
@@ -96,6 +109,17 @@ export default function AssignedTopicChat() {
       sessionStorage.removeItem("hasJoinedRoom");
     };
   }, []);
+
+  // Show notification when partner joins
+  useEffect(() => {
+    if (partner) {
+      // This would be a good place to add a toast notification library
+      // For now, we'll just use the browser's built-in notification if available
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification(`${partner.name} has joined your debate!`);
+      }
+    }
+  }, [partner]);
 
   // Auto-scroll to the bottom of the chat
   useEffect(() => {
@@ -176,23 +200,34 @@ export default function AssignedTopicChat() {
         <>
           {/* Header */}
           <header className="bg-white shadow-sm p-4 flex items-center justify-between">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-800">
+            <div className="flex-grow">
+              <h1 className="text-xl font-semibold text-gray-800 mb-1">
                 Debate {topic}!
               </h1>
+              
               {partner ? (
-                <p className="text-sm text-gray-600">
-                  Debating with {partner.name}
-                </p>
+                <div className={`transition-all duration-500 ${isPartnerNew ? 'animate-pulse' : ''} bg-green-50 border-l-4 border-green-400 p-2 rounded`}>
+                  <p className="text-lg font-medium text-green-800 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    Debating with <span className="font-bold ml-1">{partner.name}</span>
+                  </p>
+                </div>
               ) : (
-                <p className="text-sm text-gray-600 flex items-center">
-                  <span className="mr-2">Waiting for a partner</span>
-                  <span className="flex space-x-1">
-                    <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
-                    <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
-                    <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
-                  </span>
-                </p>
+                <div className="bg-indigo-50 border-l-4 border-indigo-400 p-2 rounded">
+                  <p className="text-lg font-medium text-indigo-800 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                    </svg>
+                    <span className="mr-2">Waiting for a partner</span>
+                    <span className="flex space-x-1">
+                      <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                      <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                      <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                    </span>
+                  </p>
+                </div>
               )}
             </div>
 
