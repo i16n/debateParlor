@@ -40,11 +40,46 @@ app.prepare().then(() => {
     next();
   });
 
+  // Helper function to get active rooms
+  function getActiveRoomsData() {
+    const activeRooms = [];
+    for (const [roomId, roomData] of rooms.entries()) {
+      if (roomData.isActive) {
+        // Clone the room to avoid sending socket objects
+        const roomClone = {
+          id: roomData.id,
+          type: roomData.type,
+          topic: roomData.topic,
+          startTime: roomData.startTime,
+          isActive: roomData.isActive,
+          // Include minimal user information (no socket IDs)
+          users: roomData.users.map(user => ({
+            id: user.id,
+            name: user.name
+          }))
+        };
+        activeRooms.push(roomClone);
+      }
+    }
+    return activeRooms;
+  }
+
+  // Emit room updates to all connected clients
+  function emitRoomUpdates() {
+    io.emit("roomsUpdated", getActiveRoomsData());
+  }
+
   io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
 
+    // Get active rooms
+    socket.on("getActiveRooms", (callback) => {
+      console.log("Client requested active rooms");
+      callback(getActiveRoomsData());
+    });
+
     // Join a room
-    socket.on("joinRoom", (userData, roomType, callback) => {
+    socket.on("joinRoom", (userData, roomType, targetRoomId, callback) => {
       console.log(`User ${userData.name} trying to join ${roomType} room`);
 
       // Check if this socket already has a user and is in a room
@@ -68,21 +103,34 @@ app.prepare().then(() => {
       // Store user
       users.set(userId, user);
 
-      // Find available room or create new one
       let room;
 
-      // Check for available rooms that have exactly 1 user
-      for (const [roomId, roomData] of rooms.entries()) {
-        if (
-          roomData.type === roomType &&
-          roomData.users.length === 1 &&
-          roomData.isActive
-        ) {
-          room = roomData;
-          console.log(
-            `Found existing ${roomType} room ${roomId} with ${roomData.users.length} users`
-          );
-          break;
+      // If targetRoomId is provided, try to join that specific room
+      if (targetRoomId && rooms.has(targetRoomId)) {
+        const targetRoom = rooms.get(targetRoomId);
+        if (targetRoom.isActive && targetRoom.type === roomType) {
+          room = targetRoom;
+          console.log(`Joining specific room ${targetRoomId} as requested`);
+        } else {
+          console.log(`Cannot join room ${targetRoomId}: not active or wrong type`);
+        }
+      }
+
+      // If no target room or target room not found, find an available room
+      if (!room) {
+        // Check for available rooms that have exactly 1 user
+        for (const [roomId, roomData] of rooms.entries()) {
+          if (
+            roomData.type === roomType &&
+            roomData.users.length === 1 &&
+            roomData.isActive
+          ) {
+            room = roomData;
+            console.log(
+              `Found existing ${roomType} room ${roomId} with ${roomData.users.length} users`
+            );
+            break;
+          }
         }
       }
 
@@ -110,6 +158,9 @@ app.prepare().then(() => {
       // Add user to room
       room.users.push(user);
       user.roomId = room.id;
+
+      // Emit room updates to all clients
+      emitRoomUpdates();
 
       // Join socket room
       // First leave any existing rooms (except the socket's own room)
@@ -185,7 +236,7 @@ app.prepare().then(() => {
       callback(true);
     });
 
-    // Set topic (free-topic room only)
+    // Set topic (free-topic or change-my-mind room)
     socket.on("setTopic", (topic, callback) => {
       const user = [...users.values()].find((u) => u.socketId === socket.id);
       if (!user || !user.roomId) {
@@ -194,7 +245,7 @@ app.prepare().then(() => {
       }
 
       const room = rooms.get(user.roomId);
-      if (!room || room.type !== "free-topic") {
+      if (!room || (room.type !== "free-topic" && room.type !== "change-my-mind")) {
         callback(false);
         return;
       }
@@ -204,6 +255,9 @@ app.prepare().then(() => {
 
       // Broadcast to room
       io.to(room.id).emit("topicChanged", topic);
+      
+      // Emit room updates since the topic changed
+      emitRoomUpdates();
 
       callback(true);
     });
@@ -289,6 +343,9 @@ app.prepare().then(() => {
           console.log(`Room ${roomId} marked as inactive (empty)`);
           // We keep the room in memory for history purposes
         }
+
+        // Emit room updates since a user left
+        emitRoomUpdates();
       }
     }
 

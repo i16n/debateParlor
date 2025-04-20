@@ -16,7 +16,7 @@ export interface User {
 
 export interface Room {
   id: string;
-  type: "free-topic" | "assigned-topic";
+  type: "free-topic" | "assigned-topic" | "change-my-mind";
   users: User[];
   messages: ChatMessage[];
   topic?: string;
@@ -37,9 +37,11 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
   joinRoom: (
     user: { name: string },
-    roomType: "free-topic" | "assigned-topic",
+    roomType: "free-topic" | "assigned-topic" | "change-my-mind",
+    targetRoomId: string | null,
     callback: (room: Room) => void
   ) => void;
+  getActiveRooms: (callback: (rooms: Room[]) => void) => void;
   sendMessage: (
     content: string,
     callback: (delivered: boolean) => void

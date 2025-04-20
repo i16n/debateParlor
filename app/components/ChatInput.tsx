@@ -5,11 +5,13 @@ import { useState } from "react";
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
   disabled?: boolean;
+  placeholder?: string;
 }
 
 export default function ChatInput({
   onSendMessage,
   disabled = false,
+  placeholder = "Type your message...",
 }: ChatInputProps) {
   const [message, setMessage] = useState("");
 
@@ -27,7 +29,7 @@ export default function ChatInput({
         type="text"
         value={message}
         onChange={(e) => setMessage(e.target.value)}
-        placeholder="Type your message..."
+        placeholder={placeholder}
         className="input flex-grow"
         disabled={disabled}
       />

@@ -28,7 +28,8 @@ interface ChatContextType {
   restartKey: number;
   joinRoom: (
     userName: string,
-    roomType: "free-topic" | "assigned-topic"
+    roomType: "free-topic" | "assigned-topic" | "change-my-mind",
+    targetRoomId?: string
   ) => Promise<Room | null>;
 }
 
@@ -228,37 +229,64 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
   // when a user joins a room via joinRoom, this const sets up a bunch of state variables
   const joinRoom = async (
     userName: string,
-    roomType: "free-topic" | "assigned-topic"
+    roomType: "free-topic" | "assigned-topic" | "change-my-mind",
+    targetRoomId?: string
   ) => {
     if (!socket || !socket.connected) return null;
 
-    return new Promise<Room>((resolve) => {
-      socket.emit("joinRoom", { name: userName }, roomType, (roomData) => {
-        setRoom(roomData);
-        setTopic(roomData.topic || null);
+    try {
+      return new Promise<Room | null>((resolve, reject) => {
+        socket.emit(
+          "joinRoom",
+          { name: userName },
+          roomType,
+          targetRoomId || null, // Pass null if targetRoomId is not provided
+          (room: Room) => {
+            // Update state with room data
+            setRoom(room);
+            setCurrentUser(
+              room.users.find((u) => u.name === userName) || null
+            );
+            setPartner(
+              room.users.find((u) => u.name !== userName) || null
+            );
+            setTopic(room.topic || null);
+            setMessages(room.messages || []);
 
-        // Find current user
-        const user = roomData.users.find((u) => u.name === userName) || null;
-        setCurrentUser(user);
+            // Handle room-specific state
+            if (room.type === "assigned-topic") {
+              // Set initial agreement state
+              const userObj = room.users.find((u) => u.name === userName);
+              if (userObj) {
+                setIsUserAgreed(room.userAgreed[userObj.id] || false);
+              }
 
-        // Find partner if exists
-        const otherUser =
-          roomData.users.find((u) => u.name !== userName) || null;
-        setPartner(otherUser);
+              const partnerObj = room.users.find((u) => u.name !== userName);
+              if (partnerObj) {
+                setIsPartnerAgreed(room.userAgreed[partnerObj.id] || false);
+              }
+            }
 
-        // Always show the chat interface regardless of partner presence
-        // The components will handle forced loading
-        setIsWaiting(false);
-        
-        // Only start timer if there's a partner
-        setIsTimerRunning(!!otherUser);
+            // Different waiting behavior depending on room type
+            if (room.type === "change-my-mind") {
+              // For "change-my-mind" rooms, we don't wait for a partner
+              setIsWaiting(false);
+            } else {
+              // For other room types, wait for a partner
+              setIsWaiting(room.users.length < 2);
+            }
 
-        // Set initial messages
-        setMessages(roomData.messages);
+            // Start timer if two users
+            setIsTimerRunning(room.users.length >= 2);
 
-        resolve(roomData);
+            resolve(room);
+          }
+        );
       });
-    });
+    } catch (error) {
+      console.error("Error joining room:", error);
+      return null;
+    }
   };
 
   const sendMessage = async (content: string): Promise<boolean> => {

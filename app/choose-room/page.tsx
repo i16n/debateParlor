@@ -33,13 +33,15 @@ export default function ChooseRoom() {
     setUserName(name);
   }, [router]);
 
-  const handleRoomSelect = (roomType: "free-topic" | "assigned-topic") => {
+  const handleRoomSelect = (roomType: "change-my-mind" | "assigned-topic" | "browse-rooms") => {
     sessionStorage.setItem("roomType", roomType);
 
-    if (roomType === "free-topic") {
-      router.push("/chat/free-topic");
-    } else {
+    if (roomType === "change-my-mind") {
+      router.push("/chat/change-my-mind");
+    } else if (roomType === "assigned-topic") {
       router.push("/chat/assigned-topic");
+    } else if (roomType === "browse-rooms") {
+      router.push("/browse-rooms");
     }
   };
 
@@ -59,15 +61,14 @@ export default function ChooseRoom() {
         <div className="mt-8 space-y-4">
           <wired-card
             elevation={2}
-            onClick={() => handleRoomSelect("free-topic")}
+            onClick={() => handleRoomSelect("change-my-mind")}
             className="w-full p-6 text-left hover:bg-gray-50 transition-colors cursor-pointer"
           >
             <h2 className="text-xl font-semibold text-primary">
-              Argue About Anything
+              Create a Room - "Change My Mind"-style
             </h2>
             <p className="mt-2 text-gray-600">
-              Join a chat room with a random person and state your own topic for
-              debate.
+              Create your own room and set a topic you want to debate about.
             </p>
           </wired-card>
 
@@ -82,6 +83,19 @@ export default function ChooseRoom() {
             <p className="mt-2 text-gray-600">
               Get matched with a random person and debate a randomly assigned
               topic.
+            </p>
+          </wired-card>
+
+          <wired-card
+            elevation={2}
+            onClick={() => handleRoomSelect("browse-rooms")}
+            className="w-full p-6 text-left hover:bg-gray-50 transition-colors cursor-pointer"
+          >
+            <h2 className="text-xl font-semibold text-green-600">
+              Browse Live "Change My Mind" Rooms
+            </h2>
+            <p className="mt-2 text-gray-600">
+              See all currently active rooms and join the debate that interests you.
             </p>
           </wired-card>
         </div>
