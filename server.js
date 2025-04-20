@@ -47,6 +47,17 @@ app.prepare().then(() => {
     socket.on("joinRoom", (userData, roomType, callback) => {
       console.log(`User ${userData.name} trying to join ${roomType} room`);
 
+      // Check if this socket already has a user and is in a room
+      const existingUser = [...users.values()].find(u => u.socketId === socket.id);
+      if (existingUser && existingUser.roomId) {
+        const existingRoom = rooms.get(existingUser.roomId);
+        if (existingRoom) {
+          console.log(`Socket ${socket.id} (${userData.name}) already in room ${existingRoom.id}, preventing duplicate join`);
+          callback(existingRoom);
+          return;
+        }
+      }
+
       const userId = uuidv4();
       const user = {
         id: userId,
@@ -59,9 +70,8 @@ app.prepare().then(() => {
 
       // Find available room or create new one
       let room;
-      let isNewRoom = false;
 
-      // Check for available rooms
+      // Check for available rooms that have exactly 1 user
       for (const [roomId, roomData] of rooms.entries()) {
         if (
           roomData.type === roomType &&
@@ -93,8 +103,17 @@ app.prepare().then(() => {
           room.topic = getRandomTopic();
         }
 
+        // Add a system message indicating waiting status
+        const waitingMessage = {
+          id: uuidv4(),
+          content: "Waiting for someone to join...",
+          sender: "System",
+          timestamp: new Date(),
+          isSystem: true,
+        };
+        room.messages.push(waitingMessage);
+
         rooms.set(roomId, room);
-        isNewRoom = true;
         console.log(`Created new ${roomType} room ${roomId}`);
       }
 
@@ -103,6 +122,14 @@ app.prepare().then(() => {
       user.roomId = room.id;
 
       // Join socket room
+      // First leave any existing rooms (except the socket's own room)
+      for (const roomId of socket.rooms) {
+        if (roomId !== socket.id) {
+          console.log(`Leaving previous room: ${roomId}`);
+          socket.leave(roomId);
+        }
+      }
+      
       socket.join(room.id);
       console.log(`Socket ${socket.id} joined room ${room.id}`);
       console.log(`Current socket rooms:`, [...socket.rooms]);
@@ -154,7 +181,7 @@ app.prepare().then(() => {
         }
       }
 
-      // Return room data to client (without any special modification)
+      // Return room data to client
       callback(room);
     });
 

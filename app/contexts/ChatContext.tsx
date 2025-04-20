@@ -88,6 +88,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
     const onConnect = () => {
       setIsConnected(true);
       console.log("Connected to socket server");
+      
+      // Try to recover room state if reconnecting
+      if (currentUser && room) {
+        console.log("Reconnected - attempting to recover room state");
+      }
     };
 
     const onDisconnect = () => {
@@ -216,6 +221,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [room, currentUser, partner]);
 
+  // when a user joins a room via joinRoom, this const sets up a bunch of state variables
   const joinRoom = async (
     userName: string,
     roomType: "free-topic" | "assigned-topic"
@@ -236,7 +242,11 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({
           roomData.users.find((u) => u.name !== userName) || null;
         setPartner(otherUser);
 
-        setIsWaiting(!otherUser);
+        // Always show the chat interface regardless of partner presence
+        // The components will handle forced loading
+        setIsWaiting(false);
+        
+        // Only start timer if there's a partner
         setIsTimerRunning(!!otherUser);
 
         // Set initial messages

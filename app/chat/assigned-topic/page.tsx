@@ -30,12 +30,22 @@ export default function AssignedTopicChat() {
   const [userName, setUserName] = useState("");
   const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [forceLoading, setForceLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
   // Set isClient to true once component mounts on client
   useEffect(() => {
     setIsClient(true);
+  }, []);
+
+  // Force loading screen for 1 second
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setForceLoading(false);
+    }, 1000);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   // Load user data from session storage
@@ -58,11 +68,19 @@ export default function AssignedTopicChat() {
 
   // Join room effect - separated to avoid dependencies issues
   useEffect(() => {
+    // Check if we've already joined a room in this session
+    const hasJoinedBefore = sessionStorage.getItem("hasJoinedRoom") === "true";
+    if (hasJoinedBefore) {
+      setHasJoinedRoom(true);
+      return;
+    }
+
     if (userName && !hasJoinedRoom && isConnected) {
       console.log("Joining assigned-topic room as:", userName);
       joinRoom(userName, "assigned-topic")
         .then(() => {
           setHasJoinedRoom(true);
+          sessionStorage.setItem("hasJoinedRoom", "true");
           console.log("Successfully joined room");
         })
         .catch((err) => {
@@ -75,7 +93,7 @@ export default function AssignedTopicChat() {
   useEffect(() => {
     return () => {
       // Cleanup when component unmounts
-      sessionStorage.removeItem("hasJoined");
+      sessionStorage.removeItem("hasJoinedRoom");
     };
   }, []);
 
@@ -97,7 +115,7 @@ export default function AssignedTopicChat() {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      {isWaiting ? (
+      {isWaiting || forceLoading ? (
         <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-blue-50 to-indigo-100">
           <div className="text-center p-8 max-w-md">
             <div className="mb-8">
@@ -162,9 +180,20 @@ export default function AssignedTopicChat() {
               <h1 className="text-xl font-semibold text-gray-800">
                 Debate {topic}!
               </h1>
-              <p className="text-sm text-gray-600">
-                Debating with {partner?.name || "Unknown"}
-              </p>
+              {partner ? (
+                <p className="text-sm text-gray-600">
+                  Debating with {partner.name}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-600 flex items-center">
+                  <span className="mr-2">Waiting for a partner</span>
+                  <span className="flex space-x-1">
+                    <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                    <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                    <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+                  </span>
+                </p>
+              )}
             </div>
 
             <div className="flex items-center space-x-4">
